@@ -1,23 +1,34 @@
-# run with:
-# docker run --rm -p 127.0.0.1:9091:9091 -p 127.0.0.1:51413:51413 -p 127.0.0.1:51413:51413/udp 0421b83c5a35
-# build with:
-# docker build -t fr3nd/transmission:latest .
-
-FROM ubuntu:14.04
+FROM debian:jessie
 MAINTAINER Carles Amigó, fr3nd@fr3nd.net
 
-ENV TRANSMISSION_VERSION 2.84
+ENV TRANSMISSION_VERSION 2.92
 
-RUN apt-get update
-RUN apt-get install -y build-essential automake autoconf libtool pkg-config intltool libglib2.0-dev libevent-dev libminiupnpc-dev libminiupnpc-dev libcurl4-openssl-dev
-RUN apt-get install -y wget
-RUN wget https://transmission.cachefly.net/transmission-${TRANSMISSION_VERSION}.tar.xz
-RUN tar xvJf transmission-${TRANSMISSION_VERSION}.tar.xz
-WORKDIR transmission-2.84
-RUN ./configure --disable-gtk --enable-daemon --disable-cli --prefix=/usr
-RUN make
-RUN make install
+RUN apt-get update && apt-get install -y \
+      autoconf \
+      automake \
+      build-essential \
+      intltool \
+      libcurl4-openssl-dev \
+      libevent-dev \
+      libglib2.0-dev \
+      libminiupnpc-dev \
+      libminiupnpc-dev \
+      libssl-dev \
+      libtool \
+      pkg-config \
+      && rm -rf /usr/share/doc/* && \
+      rm -rf /usr/share/info/* && \
+      rm -rf /tmp/* && \
+      rm -rf /var/tmp/*
+
+RUN mkdir -p /usr/src/transmission
+WORKDIR /usr/src/transmission
+RUN curl -L https://transmission.cachefly.net/transmission-${TRANSMISSION_VERSION}.tar.xz | \
+    tar xvJ --strip-components=1 && \
+    ./configure --enable-daemon --enable-cli --prefix=/usr && \
+    make && \
+    make install && \
+    rm -rf /usr/src/transmission
 WORKDIR /
-RUN rm -rf transmission-*
 
 EXPOSE 9091 51413 51413/udp
